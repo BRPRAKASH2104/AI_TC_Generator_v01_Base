@@ -1,0 +1,79 @@
+CPU
+
+	Intel(R) Core(TM) Ultra 7 165H
+
+	Base speed:	3.80 GHz
+	Sockets:	1
+	Cores:	16
+	Logical processors:	22
+	Virtualization:	Enabled
+	L1 cache:	1.6 MB
+	L2 cache:	18.0 MB
+	L3 cache:	24.0 MB
+
+
+Memory
+
+	32.0 GB
+
+	Speed:	7467 MT/s
+	Slots used:	8 of 8
+	Form factor:	Row of chips
+	Hardware reserved:	563 MB
+
+Disk 0 (C:)
+
+	PM9F1 Samsung 2048GB
+
+	Capacity:	1.9 TB
+	Formatted:	1.9 TB
+	System disk:	Yes
+	Page file:	Yes
+	Type:	SSD
+
+
+GPU 0
+
+	Intel(R) Arc(TM) Graphics
+
+	Driver version:	32.0.101.5978
+	Driver date:	8/22/2024
+	DirectX version:	12 (FL 12.1)
+	Physical location:	PCI bus 0, device 2, function 0
+
+	Utilization	2%
+	Dedicated GPU memory	
+	Shared GPU memory	0.8/17.9 GB
+	GPU Memory	0.8/17.9 GB
+
+GPU 1
+
+	NVIDIA RTX 2000 Ada Generation Laptop GPU
+
+	Driver version:	32.0.15.7276
+	Driver date:	3/7/2025
+	DirectX version:	12 (FL 12.1)
+	Physical location:	PCI bus 1, device 0, function 0
+
+	Utilization	0%
+	Dedicated GPU memory	0.0/8.0 GB
+	Shared GPU memory	0.0/17.9 GB
+	GPU Memory	0.0/25.9 GB
+
+
+NPU 0
+
+	Intel(R) AI Boost
+
+	Driver version:	32.0.100.3104
+	Driver date:	10/25/2024
+	DirectX version:	12 (FL 1.0 : Compute)
+	Physical location:	PCI bus 0, device 11, function 0
+
+	Utilization	0%
+	Dedicated GPU memory	
+	Shared GPU memory	0.0/17.9 GB
+	GPU Memory	0.0/17.9 GB
+
+
+

@@ -1,0 +1,11 @@
+System Requirements: The main functional logic describes the actual functionalities, including input and expected output. These can be presented in various formats such as text, images, flow diagrams, state diagrams, and tables.
+
+System Interface: These are the key components referenced by the System Requirements. This interface defines the input, output, local variables, HMI components, etc., and is essential for understanding the system requirements and creating test cases.
+
+Design Information: Arctecture block diagram explaining the various inputs to consider and output signals or states.
+
+Application Parameter: One or more parameters that had to be considered while developing the test cases. These parameters can be input or output or local variables, etc.
+
+Information: Consiste of block diagrams, flow diagram, Critical details to consider when decoding and breaking down the System Requirements.
+
+Heading: Useful information for the test author, tester, and reviewer to understand the context of that specific system requirement.
