@@ -4,7 +4,7 @@ Generate TCs from REQIF Files
 ## Default command:
 python generate_contextual_tests.py "../input/reqifz_files"
 
-##✅ Enhanced Command Line Interface:
+## ✅ Enhanced Command Line Interface:
 ### Use different models easily:
 python refactored_main_with_config.py "../input/reqifz_files" --model deepseek-coder-v2:16b
 
@@ -19,4 +19,4 @@ python refactored_main_with_config.py "../input/reqifz_files" --verbose
 
 ### Custom configuration:
 python refactored_main_with_config.py "../input/reqifz_files" --config custom_config.yaml
-✅ Key Benefits:
+
