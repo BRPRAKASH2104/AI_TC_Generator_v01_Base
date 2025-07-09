@@ -1,0 +1,143 @@
+# =================================================================
+# Error Handling and Validation Prompts
+# File: prompts/templates/error_handling.yaml
+# =================================================================
+
+metadata:
+  version: "1.0"
+  description: "Error handling and validation prompts"
+
+error_prompts:
+  
+  validation_failure:
+    name: "Validation Failure Guidance"
+    description: "Provides guidance when requirement validation fails"
+    
+    variables:
+      required:
+        - requirement_id
+        - error_type
+        - error_message
+      optional:
+        - file_name
+        - suggested_actions
+      defaults:
+        file_name: "Unknown file"
+        suggested_actions: "1. Review the requirement structure\n2. Check XML/HTML formatting\n3. Verify table structure\n4. Contact technical support"
+    
+    template: |
+      ❌ REQUIREMENT ANALYSIS FAILED
+      
+      **Requirement ID:** {requirement_id}
+      **File:** {file_name}
+      **Error Type:** {error_type}
+      **Error Details:** {error_message}
+      
+      **Diagnostic Information:**
+      The AI test case generator encountered an issue while processing this requirement.
+      
+      **Recommended Actions:**
+      {suggested_actions}
+      
+      **Next Steps:**
+      1. Review the requirement structure in the source REQIF file
+      2. Verify that all required elements are present and properly formatted
+      3. Check the error details above for specific guidance
+      4. Contact the test engineering team if the issue persists
+      
+      **Technical Support:**
+      - Check XML/HTML structure validation
+      - Verify namespace declarations
+      - Ensure table markup is properly formed
+      - Validate that input/output columns are clearly defined
+
+  no_table_found:
+    name: "No Table Found Error"
+    description: "Specific guidance when no HTML table is found in requirement"
+    
+    variables:
+      required:
+        - requirement_id
+        - requirement_text
+      optional:
+        - file_name
+      defaults:
+        file_name: "Unknown file"
+    
+    template: |
+      ⚠️ NO TEST TABLE FOUND
+      
+      **Requirement ID:** {requirement_id}
+      **File:** {file_name}
+      **Issue:** This requirement does not contain a testable logic table
+      
+      **Requirement Content Preview:**
+      {requirement_text}
+      
+      **Resolution Steps:**
+      1. **Verify Table Structure**: Ensure the requirement contains an HTML table with input/output columns
+      2. **Check Table Headers**: Table must have clear "Input" and "Output" column designations
+      3. **Validate HTML Markup**: Confirm table uses proper HTML tags (<table>, <tr>, <td>, <th>)
+      4. **Review Content Type**: This requirement may be informational only (no test cases needed)
+      
+      **What Makes a Requirement Testable:**
+      - Contains a logic table with clear input conditions
+      - Has defined output expectations
+      - Includes both headers and data rows
+      - Uses standard HTML table formatting
+
+  ollama_connection_error:
+    name: "Ollama Connection Error"
+    description: "Guidance when Ollama API is not accessible"
+    
+    variables:
+      required:
+        - error_details
+        - model_name
+      optional:
+        - retry_count
+      defaults:
+        retry_count: "0"
+    
+    template: |
+      🔌 OLLAMA CONNECTION FAILED
+      
+      **Model:** {model_name}
+      **Error:** {error_details}
+      **Retry Attempts:** {retry_count}
+      
+      **Troubleshooting Steps:**
+      
+      1. **Check Ollama Service:**
+         ```bash
+         # Verify Ollama is running
+         ollama list
+         
+         # Check service status
+         curl http://localhost:11434/api/tags
+         ```
+      
+      2. **Verify Model Availability:**
+         ```bash
+         # List installed models
+         ollama list
+         
+         # Pull model if missing
+         ollama pull {model_name}
+         ```
+      
+      3. **Network Configuration:**
+         - Confirm Ollama is running on localhost:11434
+         - Check firewall and proxy settings
+         - Verify no port conflicts
+      
+      4. **System Resources:**
+         - Ensure sufficient RAM for model
+         - Check disk space for model files
+         - Monitor CPU/GPU utilization
+      
+      **Quick Fixes:**
+      - Restart Ollama service
+      - Clear model cache and re-download
+      - Try alternative model (llama3.1:8b)
+      - Check system logs for detailed errors
