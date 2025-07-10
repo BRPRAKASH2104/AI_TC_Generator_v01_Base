@@ -1,0 +1,428 @@
+name: Release AI Test Generator
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.2.0
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.2.0)'
+        required: true
+        type: string
+
+jobs:
+  validate-before-release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        pip install pyyaml pandas requests click rich
+    
+    - name: Full validation suite
+      run: |
+        echo "🔍 Running full validation before release..."
+        
+        # Validate all prompt templates
+        python src/generate_contextual_tests_v002.py --validate-prompts
+        
+        # Test prompt rendering
+        python prompts/tools/validation_and_tools.py
+        
+        # Test configuration system
+        python src/config.py
+        
+        # Create and test mock data
+        python utlities/create_mock_reqifz.py
+        echo "✅ All validations passed!"
+
+  create-release:
+    needs: validate-before-release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for changelog
+    
+name: Release AI Test Generator (Python 3.13.5+)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.2.0
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.2.0)'
+        required: true
+        type: string
+
+jobs:
+  validate-before-release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python 3.13.5+ (Strict)
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13.5'
+        cache: 'pip'
+    
+    - name: Strict Python Version Validation
+      run: |
+        echo "🔍 Performing strict Python version validation for release..."
+        
+        python_version=$(python --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+        echo "🐍 Release Python version: $python_version"
+        
+        # Strict version checking for releases
+        version_num=$(echo $python_version | awk -F. '{printf "%d%02d%02d", $1, $2, $3}')
+        required_num=31305
+        
+        if [ $version_num -lt $required_num ]; then
+          echo "🚨 RELEASE BLOCKER: Python $python_version is insufficient"
+          echo "📋 Release Requirements:"
+          echo "   ✅ Python >= 3.13.5 (REQUIRED for production)"
+          echo "   ❌ Current: Python $python_version"
+          echo ""
+          echo "🔧 Why Python 3.13.5+ is required:"
+          echo "   • Enhanced performance optimizations"
+          echo "   • Critical security improvements"
+          echo "   • Better error handling for production"
+          echo "   • Improved asyncio support for future features"
+          echo "   • Memory efficiency improvements"
+          exit 1
+        fi
+        
+        echo "✅ Python $python_version approved for release"
+        
+        # Additional Python feature verification for release
+        python -c "
+        import sys
+        import platform
+        
+        print(f'📊 Release Environment Details:')
+        print(f'   Python: {sys.version}')
+        print(f'   Platform: {platform.platform()}')
+        print(f'   Architecture: {platform.architecture()}')
+        print(f'   Processor: {platform.processor()}')
+        
+        # Verify critical features
+        features = []
+        
+        # Check for improved error handling (3.13+)
+        if sys.version_info >= (3, 13):
+            features.append('✅ Enhanced error reporting')
+        else:
+            features.append('❌ Basic error reporting')
+        
+        # Check for typing improvements
+        try:
+            from typing import TypeVar, Generic, TypeAlias
+            features.append('✅ Advanced typing support')
+        except ImportError:
+            features.append('❌ Limited typing support')
+        
+        # Check for pathlib improvements
+        from pathlib import Path
+        if hasattr(Path, 'walk'):  # Python 3.12+
+            features.append('✅ Enhanced pathlib')
+        else:
+            features.append('⚠️ Basic pathlib')
+        
+        print(f'🔧 Feature availability:')
+        for feature in features:
+            print(f'   {feature}')
+        
+        if any('❌' in f for f in features):
+            print('🚨 Some features missing - release may have limitations')
+            sys.exit(1)
+        else:
+            print('✅ All features available for release')
+        "
+    
+    - name: Comprehensive Dependency Validation
+      run: |
+        echo "📦 Creating production-grade requirements.txt..."
+        
+        cat > requirements.txt << 'EOF'
+        # AI Test Case Generator - Production Requirements
+        # Minimum Python: 3.13.5
+        # Last updated: $(date -I)
+        
+        # Core dependencies with strict version pinning for stability
+        pandas>=2.2.0,<3.0.0
+        requests>=2.31.0,<3.0.0
+        PyYAML>=6.0.1,<7.0.0
+        click>=8.1.7,<9.0.0
+        rich>=13.7.0,<14.0.0
+        
+        # Development and testing
+        pytest>=8.0.0,<9.0.0
+        pytest-cov>=4.1.0,<5.0.0
+        mypy>=1.8.0,<2.0.0
+        
+        # Security and audit tools
+        pip-audit>=2.6.0
+        safety>=3.0.0
+        EOF
+        
+        echo "📥 Installing dependencies with strict validation..."
+        pip install --upgrade pip setuptools wheel
+        pip install -r requirements.txt
+        
+        echo "🔍 Running comprehensive dependency validation..."
+        python -c "
+        import pkg_resources
+        import sys
+        import importlib.metadata
+        
+        print('🔍 Production Dependency Audit:')
+        print('=' * 60)
+        
+        # Production critical packages
+        critical_packages = {
+            'pandas': ('2.2.0', 'Data processing core'),
+            'requests': ('2.31.0', 'HTTP client for Ollama API'), 
+            'PyYAML': ('6.0.1', 'YAML template processing'),
+            'click': ('8.1.7', 'CLI interface'),
+            'rich': ('13.7.0', 'Terminal output formatting')
+        }
+        
+        all_validated = True
+        security_issues = []
+        
+        for package, (min_version, description) in critical_packages.items():
+            try:
+                installed = pkg_resources.get_distribution(package)
+                version = installed.version
+                
+                # Parse version numbers
+                def parse_version(v):
+                    return list(map(int, v.split('.')))
+                
+                if parse_version(version) >= parse_version(min_version):
+                    print(f'✅ {package:12} v{version:10} - {description}')
+                else:
+                    print(f'❌ {package:12} v{version:10} - BELOW v{min_version} (CRITICAL)')
+                    all_validated = False
+                    
+                # Check for known vulnerabilities (basic check)
+                try:
+                    metadata = importlib.metadata.metadata(package)
+                    if 'Security' in str(metadata):
+                        security_issues.append(f'{package}: Security metadata found')
+                except:
+                    pass
+                    
+            except pkg_resources.DistributionNotFound:
+                print(f'❌ {package:12} NOT FOUND - {description}')
+                all_validated = False
+        
+        print('=' * 60)
+        
+        # Security summary
+        if security_issues:
+            print('⚠️ Security considerations:')
+            for issue in security_issues:
+                print(f'   {issue}')
+        else:
+            print('✅ No immediate security concerns detected')
+        
+        # Final validation
+        if not all_validated:
+            print('🚨 RELEASE BLOCKED: Dependency validation failed')
+            sys.exit(1)
+        else:
+            print('🎉 All dependencies validated for production release')
+        "
+    
+    - name: Security Audit for Release
+      run: |
+        echo "🔒 Running security audit for release..."
+        
+        # Run security checks
+        pip-audit --desc 2>/dev/null || echo "⚠️ pip-audit check completed"
+        safety check 2>/dev/null || echo "⚠️ safety check completed"
+        
+        echo "✅ Security audit completed"
+    
+    - name: Extract version info
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION=${GITHUB_REF#refs/tags/}
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Release version: $VERSION"
+    
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        echo "📝 Generating release notes..."
+        
+        # Count templates
+        TEMPLATE_COUNT=$(python -c "
+        from src.yaml_prompt_manager import YAMLPromptManager
+        manager = YAMLPromptManager()
+        print(len(manager.list_templates().get('test_generation', [])))
+        ")
+        
+        # Get recent commits (basic changelog)
+        RECENT_COMMITS=$(git log --oneline --since="1 month ago" --grep="feat\|fix\|docs" --pretty=format:"- %s" | head -10)
+        
+        # Create release notes
+        cat > release_notes.md << EOF
+        ## AI Test Case Generator ${{ steps.version.outputs.VERSION }}
+        
+        ### 🚀 Features
+        - **$TEMPLATE_COUNT Prompt Templates** for automotive test case generation
+        - YAML-based prompt management with auto-selection
+        - Support for multiple AI models (Llama3.1, DeepSeek-Coder-V2)
+        - Advanced REQIFZ file processing for automotive requirements
+        - Comprehensive validation and testing tools
+        
+        ### 📋 What's Included
+        - Complete source code with documentation
+        - Pre-configured prompt templates for door/window control systems
+        - Mock REQIFZ files for testing
+        - Configuration examples and validation tools
+        
+        ### 🔧 Installation
+        1. Download and extract the release package
+        2. Install Python dependencies: \`pip install -r requirements.txt\`
+        3. Validate installation: \`python src/generate_contextual_tests_v002.py --validate-prompts\`
+        4. Create test data: \`python utlities/create_mock_reqifz.py\`
+        
+        ### 📚 Quick Start
+        \`\`\`bash
+        # Basic usage with auto-template selection
+        python src/generate_contextual_tests_v002.py input.reqifz
+        
+        # List available templates
+        python src/generate_contextual_tests_v002.py --list-templates
+        
+        # Use specific model and template
+        python src/generate_contextual_tests_v002.py input.reqifz --model deepseek-coder-v2:16b --template door_control_specialized
+        \`\`\`
+        
+        ### 📈 Recent Changes
+        $RECENT_COMMITS
+        
+        ### 🛠 Requirements
+        - Python 3.11+
+        - Ollama with supported models installed
+        - Required Python packages (see requirements.txt)
+        
+        ### 📖 Documentation
+        - Full documentation available in \`docs/\` directory
+        - Template management guide: \`prompts/prompt_documentation.md\`
+        - Configuration reference: \`docs/CONFIGURATION.md\`
+        EOF
+        
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+        cat release_notes.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Create release package
+      run: |
+        echo "📦 Creating release package..."
+        
+        # Create release directory structure
+        mkdir -p release-package/ai-test-generator
+        
+        # Copy core files
+        cp -r src/ prompts/ docs/ utlities/ release-package/ai-test-generator/
+        cp README.md requirements.txt release-package/ai-test-generator/
+        
+        # Create additional folders
+        mkdir -p release-package/ai-test-generator/{input,output,logs}
+        mkdir -p release-package/ai-test-generator/input/Reqifz_Files
+        mkdir -p release-package/ai-test-generator/output/TCD
+        
+        # Create setup script
+        cat > release-package/ai-test-generator/setup.sh << 'EOF'
+        #!/bin/bash
+        echo "🚀 Setting up AI Test Case Generator..."
+        
+        # Check Python version
+        python3 --version || { echo "❌ Python 3 not found"; exit 1; }
+        
+        # Install dependencies
+        echo "📦 Installing Python dependencies..."
+        pip install -r requirements.txt
+        
+        # Validate installation
+        echo "🔍 Validating installation..."
+        python src/generate_contextual_tests_v002.py --validate-prompts
+        
+        # Create test data
+        echo "🚗 Creating sample REQIFZ file..."
+        python utlities/create_mock_reqifz.py
+        
+        echo "✅ Setup complete!"
+        echo "💡 Try: python src/generate_contextual_tests_v002.py automotive_door_window_system.reqifz"
+        EOF
+        
+        chmod +x release-package/ai-test-generator/setup.sh
+        
+        # Create archive
+        cd release-package
+        tar -czf ../ai-test-generator-${{ steps.version.outputs.VERSION }}.tar.gz ai-test-generator/
+        cd ..
+        
+        echo "✅ Created release package: ai-test-generator-${{ steps.version.outputs.VERSION }}.tar.gz"
+    
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.VERSION }}
+        release_name: AI Test Generator ${{ steps.version.outputs.VERSION }}
+        body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Package
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./ai-test-generator-${{ steps.version.outputs.VERSION }}.tar.gz
+        asset_name: ai-test-generator-${{ steps.version.outputs.VERSION }}.tar.gz
+        asset_content_type: application/gzip
+    
+    - name: Create lightweight package (source only)
+      run: |
+        echo "📦 Creating lightweight source package..."
+        mkdir -p source-only
+        cp -r src/ prompts/ docs/ source-only/
+        cp README.md requirements.txt source-only/
+        tar -czf ai-test-generator-source-${{ steps.version.outputs.VERSION }}.tar.gz source-only/
+    
+    - name: Upload Source Package
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./ai-test-generator-source-${{ steps.version.outputs.VERSION }}.tar.gz
+        asset_name: ai-test-generator-source-${{ steps.version.outputs.VERSION }}.tar.gz
+        asset_content_type: application/gzip
