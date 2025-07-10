@@ -1,0 +1,43 @@
+﻿Issue ID,Summary,Test Type,Issue Type,Project Key,Assignee,Description,Action,Data,Expected Result,Planned Execution,Test Case Type,Components,Labels,LinkTest
+1,[TFDCX32348-11301] Never Received or Communication Failure,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON",['1) Set CANSignal - PARK_S = Never Received or Communication Failure'],Verify Internal Parameter - PARK_S_Status = FALSE,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11301
+2,[TFDCX32348-11301] Received and Normal,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON",['1) Set CANSignal - PARK_S = 010010b or 010011b or 010100b or 010101b or 010111b'],Verify Internal Parameter - PARK_S_Status = TRUE,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11301
+3,[TFDCX32348-11301] Received and Normal (Other than above),RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON",['1) Set CANSignal - PARK_S = 3'],Verify Internal Parameter - PARK_S_Status = FALSE,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11301
+4,[TFDCX32348-11303] Never Received or Communication Failure,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set CANSignal - DCTY = Never Received or Communication Failure', '2) Set InternalSignal - ACCStatus = X']",Verify Internal Parameter - DCTY_Status = FALSE,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11303
+5,[TFDCX32348-11303] Received and Normal,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set CANSignal - DCTY = Received and Normal', '2) Set InternalSignal - ACCStatus = 0']",Verify Internal Parameter - DCTY_Status = FALSE,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11303
+6,[TFDCX32348-11303] Received and Normal with Rental Car Mode ON,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set CANSignal - DCTY = Received and Normal', '2) Set InternalSignal - ACCStatus = 3', '3) Set InternalSignal - RentalCarMode = TRUE']",Verify Internal Parameter - DCTY_Status = 1,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11303
+7,[TFDCX32348-11305] Initialization at CPU reset or wakeup,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set AppMode = Initialization at CPU reset or wakeup', '2) Set ACCStatus = Initialization at CPU reset or wakeup', '3) Set IgnMode = Initialization at CPU reset or wakeup', '4) Set PARK_S = Initialization at CPU reset or wakeup', '5) Set DCTY = Initialization at CPU reset or wakeup', '6) Set RentalCarMode = Initialization at CPU reset or wakeup']",Verify BOTH_OFF and Stop,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11305
+8,[TFDCX32348-11305] Sleep Mode,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set AppMode = Sleep Mode', '2) Set ACCStatus = X', '3) Set IgnMode = X', '4) Set PARK_S = X', '5) Set DCTY = X', '6) Set RentalCarMode = X']",Verify BOTH_OFF and Stop,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11305
+9,"[TFDCX32348-11305] Other than Sleep Mode, IG ON",RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set AppMode = Other thanSleep Mode', '2) Set ACCStatus = X', '3) Set IgnMode = ON', '4) Set PARK_S = X', '5) Set DCTY = X', '6) Set RentalCarMode = X']",Verify ANY_ON and Stop,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11305
+10,"[TFDCX32348-11305] Other than Sleep Mode, ACC ON",RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set AppMode = Other thanSleep Mode', '2) Set ACCStatus = X', '3) Set IgnMode = ON', '4) Set PARK_S = X', '5) Set DCTY = X', '6) Set RentalCarMode = X']",Verify ANY_ON and Stop,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11305
+11,[TFDCX32348-11305] Rental car mode exit condition satisfied at start timing,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set AppMode = Other thanSleep Mode', '2) Set ACCStatus = OFF', '3) Set IgnMode = OFF', '4) Set PARK_S = ANY_ON', '5) Set DCTY = TRUE', '6) Set RentalCarMode = BOTH_OFF']",Verify TRUE and BOTH_OFF,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11305
+12,[TFDCX32348-11305] Rental car mode start condition satisfied,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set AppMode = Other thanSleep Mode', '2) Set ACCStatus = OFF', '3) Set IgnMode = OFF', '4) Set PARK_S = ANY_ON', '5) Set DCTY = 7', '6) Set RentalCarMode = FALSE']",Verify TRUE and BOTH_OFF,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11305
+13,[TFDCX32348-11305] Rental car mode exit condition satisfied,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set AppMode = Other thanSleep Mode', '2) Set ACCStatus = OFF', '3) Set IgnMode = OFF', '4) Set PARK_S = ANY_ON', '5) Set DCTY = 7', '6) Set RentalCarMode = BOTH_OFF']",Verify TRUE and BOTH_OFF,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11305
+14,[TFDCX32348-11305] Rental car mode restart condition satisfied,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set AppMode = Other thanSleep Mode', '2) Set ACCStatus = OFF', '3) Set IgnMode = OFF', '4) Set PARK_S = ANY_ON', '5) Set DCTY = 7', '6) Set RentalCarMode = BOTH_OFF']",Verify FALSE and FALSE to TRUE,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11305
+15,[TFDCX32348-11305] Timer count down,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON","['1) Set AppMode = Other thanSleep Mode', '2) Set ACCStatus = OFF', '3) Set IgnMode = OFF', '4) Set PARK_S = ANY_ON', '5) Set DCTY = 7', '6) Set RentalCarMode = BOTH_OFF']",Verify TRUE and Count if timer is running,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11305
+16,[TFDCX32348-11307] Rental Car Mode Timer Starts at 30 seconds,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON",['1) Set NVM_RentalCarModeTM = 00h'],Verify Internal Timer - RentalCarModeTimer = Start timer with 30 sec (*1),Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11307
+17,[TFDCX32348-11307] Rental Car Mode Timer Starts at 60 seconds,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON",['1) Set NVM_RentalCarModeTM = 01h'],Verify Internal Timer - RentalCarModeTimer = Start timer with 60 sec (*1),Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11307
+18,[TFDCX32348-11307] Rental Car Mode Timer Starts at 600 seconds,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON",['1) Set NVM_RentalCarModeTM = 02h'],Verify Internal Timer - RentalCarModeTimer = Start timer with 600 sec (*1),Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11307
+19,[TFDCX32348-11307] Rental Car Mode Timer Stops,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON",['1) Set NVM_RentalCarModeTM = 03h to FFh'],Verify Internal Timer - RentalCarModeTimer = Stop,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11307
+20,[TFDCX32348-11309] Rental Car Mode is ON when Timer is Running,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON",['1) Set Internal Timer - RentalCarModeTimer = Running'],Verify Output - Internal Parameter (output) -RentalCarMode = TRUE,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11309
+21,[TFDCX32348-11309] Rental Car Mode is OFF when Timer is Expired or Stop,RoboFIT,Test,TCTOIC,ENGG,,"1. Voltage= 12V
+2. Bat-ON",['1) Set Internal Timer - RentalCarModeTimer = Expired or Stop'],Verify Output - Internal Parameter (output) -RentalCarMode = FALSE,Manual,Feature Functional,FEAT,SYS_DI_VALIDATION_TEST,TFDCX32348-11309

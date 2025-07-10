@@ -22,7 +22,7 @@ class YAMLPromptManager:
         Args:
             config_file: Path to prompt configuration file
         """
-        self.config_file = Path(config_file)
+        self.config_file = self._resolve_config_path(config_file)
         self.config = {}
         self.test_prompts = {}
         self.error_prompts = {}
@@ -30,6 +30,45 @@ class YAMLPromptManager:
         
         self.load_configuration()
         self.load_all_prompts()
+    
+    def _resolve_config_path(self, config_file: str) -> Path:
+        """
+        Resolve configuration file path, checking multiple locations
+        
+        Args:
+            config_file: Configuration file path
+            
+        Returns:
+            Resolved path to configuration file
+        """
+        config_path = Path(config_file)
+        
+        # If absolute path exists, use it
+        if config_path.is_absolute() and config_path.exists():
+            return config_path
+        
+        # Try current directory
+        if config_path.exists():
+            return config_path
+        
+        # Try parent directory (if running from src/)
+        parent_path = Path("..") / config_file
+        if parent_path.exists():
+            return parent_path
+        
+        # Try from script directory
+        script_dir = Path(__file__).parent
+        script_path = script_dir / config_file
+        if script_path.exists():
+            return script_path
+        
+        # Try from script parent directory
+        script_parent_path = script_dir.parent / config_file
+        if script_parent_path.exists():
+            return script_parent_path
+        
+        # Return original path (will fail gracefully)
+        return config_path
     
     def load_configuration(self):
         """Load main configuration file"""
@@ -67,7 +106,7 @@ class YAMLPromptManager:
         # Load test generation prompts
         test_file = self.config['file_paths']['test_generation_prompts']
         try:
-            test_path = Path(test_file)
+            test_path = self._resolve_config_path(test_file)
             if test_path.exists():
                 with open(test_path, 'r', encoding='utf-8') as f:
                     data = yaml.safe_load(f)
@@ -84,7 +123,7 @@ class YAMLPromptManager:
         error_file = self.config['file_paths'].get('error_handling_prompts', '')
         if error_file:
             try:
-                error_path = Path(error_file)
+                error_path = self._resolve_config_path(error_file)
                 if error_path.exists():
                     with open(error_path, 'r', encoding='utf-8') as f:
                         data = yaml.safe_load(f)
@@ -158,7 +197,8 @@ class YAMLPromptManager:
         # Load selection rules from test prompts file
         try:
             test_file = self.config['file_paths']['test_generation_prompts']
-            with open(test_file, 'r', encoding='utf-8') as f:
+            test_path = self._resolve_config_path(test_file)
+            with open(test_path, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f)
                 selection_rules = data.get('prompt_selection', {})
         except:
@@ -249,11 +289,17 @@ class YAMLPromptManager:
         """Validate a YAML template file and return any errors"""
         errors = []
         
+        # Resolve the file path
+        resolved_path = self._resolve_config_path(file_path)
+        
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(resolved_path, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f)
         except yaml.YAMLError as e:
             errors.append(f"YAML syntax error: {e}")
+            return errors
+        except FileNotFoundError:
+            errors.append(f"File not found: {file_path}")
             return errors
         except Exception as e:
             errors.append(f"File reading error: {e}")

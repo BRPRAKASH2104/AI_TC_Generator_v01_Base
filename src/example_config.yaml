@@ -1,0 +1,36 @@
+file_processing:
+  INPUT_ENCODING: utf-8
+  MAX_TABLE_ROWS: 100
+  OUTPUT_ENCODING: utf-8-sig
+  OUTPUT_SUFFIX: _TCD_{model}_Final.csv
+  REQIFZ_PATTERN: '*.reqifz'
+  SKIP_EMPTY_TABLES: true
+  VALIDATE_XML: true
+logging:
+  LOG_API_CALLS: false
+  LOG_DIRECTORY: logs
+  LOG_LEVEL: INFO
+  LOG_TEMPLATE_USAGE: true
+  LOG_TO_FILE: false
+  MONITOR_PERFORMANCE: true
+ollama:
+  concurrent_requests: 4
+  decomposer_model: deepseek-coder-v2:16b
+  host: 127.0.0.1
+  max_retries: 3
+  port: 11434
+  synthesizer_model: llama3.1:8b
+  temperature: 0.0
+  timeout: 600
+static_test:
+  ASSIGNEE: ENGG
+  COMPONENTS: FEAT
+  ISSUE_TYPE: Test
+  LABELS: SYS_DI_VALIDATION_TEST
+  PLANNED_EXECUTION: Manual
+  PROJECT_KEY: TCTOIC
+  TEST_CASE_TYPE: Feature Functional
+  TEST_TYPE: RoboFIT
+  VOLTAGE_PRECONDITION: '1. Voltage= 12V
+
+    2. Bat-ON'

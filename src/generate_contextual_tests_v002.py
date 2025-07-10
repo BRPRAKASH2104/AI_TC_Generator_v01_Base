@@ -825,6 +825,8 @@ def validate_model_availability(model_name: str) -> bool:
     except:
         return False
 
+# Replace the handle_prompt_management_commands function in generate_contextual_tests_v002.py
+# with this corrected version:
 
 def handle_prompt_management_commands(args) -> int:
     """
@@ -856,9 +858,124 @@ def handle_prompt_management_commands(args) -> int:
         if args.validate_prompts:
             print("🔍 Validating Prompt Templates...")
             
-            # Validate test generation templates
-            test_file = "prompts/templates/test_generation.yaml"
-            if Path(test_file).exists():
-                errors = yaml_prompt_manager.validate_template_file(test_file)
+            # Validate test generation templates - use the actual file paths from config
+            test_file = yaml_prompt_manager.config['file_paths']['test_generation_prompts']
+            test_path = yaml_prompt_manager._resolve_config_path(test_file)
+            
+            if test_path.exists():
+                errors = yaml_prompt_manager.validate_template_file(str(test_path))
+                if errors:
+                    print(f"❌ Found {len(errors)} errors in {test_file}:")
+                    for error in errors:
+                        print(f"   - {error}")
+                    return 1
+                else:
+                    print(f"✅ {test_file} is valid")
+            else:
+                print(f"⚠️  Template file not found: {test_file}")
+            
+            # Validate error handling templates
+            error_file = yaml_prompt_manager.config['file_paths'].get('error_handling_prompts', '')
+            if error_file:
+                error_path = yaml_prompt_manager._resolve_config_path(error_file)
+                if error_path.exists():
+                    errors = yaml_prompt_manager.validate_template_file(str(error_path))
+                    if errors:
+                        print(f"❌ Found {len(errors)} errors in {error_file}:")
+                        for error in errors:
+                            print(f"   - {error}")
+                        return 1
+                    else:
+                        print(f"✅ {error_file} is valid")
+                else:
+                    print(f"⚠️  Error template file not found: {error_file}")
+            
+            print("🎉 All prompt templates are valid!")
+            return 0
+        
+        if args.reload_prompts:
+            yaml_prompt_manager.reload_prompts()
+            print("🔄 Prompt templates reloaded successfully!")
+            return 0
+            
+        return 0
+        
+    except Exception as e:
+        print(f"❌ Error in prompt management: {e}")
+        return 1
 
-                    
+def main():
+    """Main application entry point"""
+    try:
+        print_banner()
+        
+        # Parse command line arguments
+        args = CommandLineInterface.parse_arguments()
+        
+        # Handle prompt management commands first
+        if args.list_templates or args.validate_prompts or args.reload_prompts:
+            return handle_prompt_management_commands(args)
+        
+        # Ensure input path is provided for file processing
+        if not args.input_path:
+            print("❌ Error: input_path is required for file processing")
+            print("Use --help for usage information")
+            return 1
+        
+        input_path = Path(args.input_path)
+        
+        # Validate model availability
+        if not validate_model_availability(args.model):
+            print(f"⚠️  Warning: Model '{args.model}' may not be available in Ollama.")
+            print("   Available models can be checked with: ollama list")
+            print("   Continuing anyway...")
+        
+        # Create configuration manager
+        config_manager = ApplicationFactory.create_config_manager()
+        
+        # Create YAML prompt manager
+        yaml_prompt_manager = ApplicationFactory.create_yaml_prompt_manager(args.prompt_config)
+        
+        # Reload prompts if requested
+        if args.reload_prompts:
+            yaml_prompt_manager.reload_prompts()
+        
+        # Discover files to process
+        files_to_process = CommandLineInterface.discover_files(input_path)
+        print(f"\n📁 Found {len(files_to_process)} .reqifz file(s) to process")
+        
+        # Create processor
+        processor = ApplicationFactory.create_processor(args.model, config_manager, yaml_prompt_manager)
+        
+        # If specific template requested, force it
+        if args.template:
+            print(f"🎯 Using specified template: {args.template}")
+            # Set the template in the prompt manager (this would need method in YAMLPromptManager)
+            # For now, we'll let it auto-select and warn if different
+        
+        # Process each file
+        for i, reqifz_file in enumerate(files_to_process, 1):
+            print(f"\n[{i}/{len(files_to_process)}] Processing: {reqifz_file.name}")
+            processor.process_file(reqifz_file)
+        
+        print(f"\n🎉 Processing complete! Generated test cases for {len(files_to_process)} file(s).")
+        print(f"📄 Look for files ending with '_YAML.csv' in the same directory as your input files.")
+            
+    except (FileNotFoundError, ValueError) as e:
+        print(f"❌ Error: {e}")
+        return 1
+    except KeyboardInterrupt:
+        print("\n\n⏹️  Process interrupted by user.")
+        return 1
+    except Exception as e:
+        print(f"💥 Unexpected error: {e}")
+        if args.verbose if 'args' in locals() else False:
+            import traceback
+            traceback.print_exc()
+        return 1
+    
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())
