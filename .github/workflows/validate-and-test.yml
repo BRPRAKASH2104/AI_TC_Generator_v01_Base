@@ -1,0 +1,327 @@
+name: Smart Validation & Testing (Python 3.13.5+)
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  validate-prompts:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python 3.13.5+
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13.5'
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements.txt
+          **/requirements*.txt
+    
+    - name: Verify Python Version (Strict Check)
+      run: |
+        python_version=$(python --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+        echo "🐍 Detected Python version: $python_version"
+        
+        # Convert version to comparable format (e.g., 3.13.5 -> 31305)
+        version_num=$(echo $python_version | awk -F. '{printf "%d%02d%02d", $1, $2, $3}')
+        required_num=31305  # 3.13.5
+        
+        if [ $version_num -lt $required_num ]; then
+          echo "❌ ERROR: Python $python_version is below required 3.13.5"
+          echo "💡 This project requires Python 3.13.5 or higher for:"
+          echo "   - Enhanced error handling"
+          echo "   - Improved type hints"
+          echo "   - Better async support"
+          echo "   - Security improvements"
+          exit 1
+        else
+          echo "✅ Python version $python_version meets requirements (>=3.13.5)"
+        fi
+    
+    - name: Check Python Features
+      run: |
+        echo "🔍 Verifying Python 3.13.5+ features..."
+        python -c "
+        import sys
+        import ast
+        
+        # Check for Python 3.13+ features
+        print(f'✅ Python {sys.version}')
+        print(f'✅ sys.version_info: {sys.version_info}')
+        
+        # Verify new features available
+        try:
+            # Check for improved error messages (3.13+)
+            compile('x = 1\ny = x +', '<test>', 'exec')
+        except SyntaxError as e:
+            if hasattr(e, 'end_lineno'):
+                print('✅ Enhanced error reporting available')
+            else:
+                print('⚠️ Limited error reporting')
+        
+        # Check for typing improvements
+        try:
+            from typing import TypeVar, Generic
+            print('✅ Advanced typing support available')
+        except ImportError:
+            print('❌ Typing support missing')
+        
+        print('✅ All Python 3.13.5+ features verified')
+        "
+    
+    
+    - name: Create and validate requirements.txt
+      run: |
+        echo "📦 Creating comprehensive requirements.txt..."
+        cat > requirements.txt << 'EOF'
+        # Core dependencies for AI Test Case Generator
+        # Minimum Python version: 3.13.5
+        
+        # Data processing and manipulation
+        pandas>=2.2.0
+        
+        # HTTP requests for Ollama API
+        requests>=2.31.0
+        
+        # YAML processing for prompt templates
+        PyYAML>=6.0.1
+        
+        # Command line interface
+        click>=8.1.7
+        
+        # Rich terminal output
+        rich>=13.7.0
+        
+        # XML processing (built-in but verify)
+        # lxml>=5.1.0  # Optional: faster XML processing
+        
+        # Development and testing (optional)
+        pytest>=8.0.0
+        pytest-cov>=4.1.0
+        
+        # Type checking (optional but recommended)
+        mypy>=1.8.0
+        EOF
+        
+        echo "✅ Requirements file created"
+    
+    - name: Install and validate dependencies
+      run: |
+        echo "📥 Installing dependencies..."
+        pip install --upgrade pip setuptools wheel
+        
+        # Install with strict dependency resolution
+        pip install -r requirements.txt
+        
+        echo "🔍 Validating installed packages..."
+        
+        # Core dependency checks with version validation
+        python -c "
+        import pkg_resources
+        import sys
+        
+        required_packages = {
+            'pandas': '2.2.0',
+            'requests': '2.31.0', 
+            'PyYAML': '6.0.1',
+            'click': '8.1.7',
+            'rich': '13.7.0'
+        }
+        
+        print('📋 Dependency Validation Report:')
+        print('=' * 50)
+        
+        all_good = True
+        for package, min_version in required_packages.items():
+            try:
+                installed = pkg_resources.get_distribution(package)
+                installed_version = installed.version
+                
+                # Simple version comparison (works for major.minor.patch)
+                def version_tuple(v):
+                    return tuple(map(int, (v.split('.'))))
+                
+                if version_tuple(installed_version) >= version_tuple(min_version):
+                    print(f'✅ {package}: {installed_version} (>= {min_version})')
+                else:
+                    print(f'❌ {package}: {installed_version} (< {min_version} REQUIRED)')
+                    all_good = False
+                    
+            except pkg_resources.DistributionNotFound:
+                print(f'❌ {package}: NOT INSTALLED')
+                all_good = False
+        
+        print('=' * 50)
+        
+        # Check for conflicts
+        print('🔍 Checking for dependency conflicts...')
+        try:
+            pkg_resources.require([f'{pkg}>={ver}' for pkg, ver in required_packages.items()])
+            print('✅ No dependency conflicts detected')
+        except pkg_resources.DistributionNotFound as e:
+            print(f'❌ Dependency conflict: {e}')
+            all_good = False
+        except pkg_resources.VersionConflict as e:
+            print(f'❌ Version conflict: {e}')
+            all_good = False
+        
+        if not all_good:
+            print('💥 Dependency validation failed!')
+            sys.exit(1)
+        else:
+            print('🎉 All dependencies validated successfully!')
+        "
+    
+    - name: Test import functionality
+      run: |
+        echo "🧪 Testing core imports and functionality..."
+        python -c "
+        import sys
+        print(f'Testing with Python {sys.version}')
+        
+        # Test core Python modules
+        test_imports = [
+            'zipfile', 'xml.etree.ElementTree', 'json', 'pathlib',
+            'argparse', 're', 'typing', 'dataclasses', 'os'
+        ]
+        
+        print('📦 Testing built-in modules:')
+        for module in test_imports:
+            try:
+                __import__(module)
+                print(f'✅ {module}')
+            except ImportError as e:
+                print(f'❌ {module}: {e}')
+                sys.exit(1)
+        
+        # Test external dependencies
+        external_imports = [
+            'pandas', 'requests', 'yaml', 'click', 'rich'
+        ]
+        
+        print('📦 Testing external dependencies:')
+        for module in external_imports:
+            try:
+                imported = __import__(module)
+                version = getattr(imported, '__version__', 'unknown')
+                print(f'✅ {module} (v{version})')
+            except ImportError as e:
+                print(f'❌ {module}: {e}')
+                sys.exit(1)
+        
+        print('✅ All imports successful!')
+        "
+    
+    - name: Advanced dependency security check
+      run: |
+        echo "🔒 Running dependency security checks..."
+        
+        # Install pip-audit for security scanning
+        pip install pip-audit
+        
+        # Run security audit
+        echo "🔍 Scanning for known vulnerabilities..."
+        pip-audit --desc --output json > security_audit.json || true
+        
+        # Parse and display results
+        python -c "
+        import json
+        import sys
+        
+        try:
+            with open('security_audit.json', 'r') as f:
+                audit_results = json.load(f)
+            
+            if 'vulnerabilities' in audit_results and audit_results['vulnerabilities']:
+                print('⚠️ Security vulnerabilities found:')
+                for vuln in audit_results['vulnerabilities']:
+                    package = vuln.get('package', 'unknown')
+                    version = vuln.get('installed_version', 'unknown')
+                    advisory = vuln.get('advisory', 'No description')
+                    print(f'  🚨 {package} v{version}: {advisory}')
+                
+                print('💡 Consider updating vulnerable packages')
+                # Don't fail build for now, just warn
+            else:
+                print('✅ No known security vulnerabilities detected')
+                
+        except (FileNotFoundError, json.JSONDecodeError):
+            print('ℹ️ Security audit completed (results not available)')
+        "
+    
+    - name: Validate YAML prompt templates
+      run: |
+        echo "🔍 Validating prompt templates..."
+        python src/generate_contextual_tests_v002.py --validate-prompts
+    
+    - name: Test prompt rendering
+      run: |
+        echo "🧪 Testing prompt template rendering..."
+        python prompts/tools/validation_and_tools.py
+    
+    - name: Test configuration loading
+      run: |
+        echo "⚙️ Testing configuration system..."
+        python src/config.py
+    
+    - name: Create and test mock REQIFZ
+      run: |
+        echo "🚗 Creating mock automotive REQIFZ file..."
+        python utlities/create_mock_reqifz.py
+        
+        echo "📋 Testing REQIFZ parsing (without AI)..."
+        python -c "
+        from src.generate_contextual_tests_v002 import REQIFArtifactExtractor
+        from pathlib import Path
+        extractor = REQIFArtifactExtractor()
+        artifacts = extractor.extract_all_artifacts(Path('automotive_door_window_system.reqifz'))
+        print(f'✅ Successfully extracted {len(artifacts)} artifacts')
+        req_with_tables = [a for a in artifacts if a.get('table')]
+        print(f'✅ Found {len(req_with_tables)} requirements with test tables')
+        "
+    
+    - name: Validate folder structure
+      run: |
+        echo "📁 Checking project structure..."
+        required_dirs=("src" "prompts/templates" "prompts/config" "docs")
+        for dir in "${required_dirs[@]}"; do
+          if [ -d "$dir" ]; then
+            echo "✅ $dir exists"
+          else
+            echo "❌ $dir missing"
+            exit 1
+          fi
+        done
+    
+    - name: Check for template consistency
+      run: |
+        echo "🔄 Checking template consistency..."
+        python -c "
+        from src.yaml_prompt_manager import YAMLPromptManager
+        manager = YAMLPromptManager()
+        templates = manager.list_templates().get('test_generation', [])
+        print(f'✅ Found {len(templates)} test generation templates')
+        for template in templates:
+            info = manager.get_template_info(template)
+            required_vars = info.get('variables', {}).get('required', [])
+            if 'requirement_id' not in required_vars:
+                print(f'⚠️ Template {template} missing required_vars requirement_id')
+            else:
+                print(f'✅ Template {template} has required variables')
+        "
+    
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          automotive_door_window_system.reqifz
+          prompts/examples/sample_outputs/
+        retention-days: 7

@@ -1,0 +1,252 @@
+name: Auto-Update Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'prompts/**'
+      - 'src/yaml_prompt_manager.py'
+      - 'src/config.py'
+  workflow_dispatch:
+
+jobs:
+  update-documentation:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout with write permissions
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    
+name: Auto-Update Documentation (Python 3.13.5+)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'prompts/**'
+      - 'src/yaml_prompt_manager.py'
+      - 'src/config.py'
+  workflow_dispatch:
+
+jobs:
+  update-documentation:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout with write permissions
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    
+    - name: Setup Python 3.13.5+
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13.5'
+        cache: 'pip'
+    
+    - name: Enforce Python Version (Strict)
+      run: |
+        python_version=$(python --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+        version_num=$(echo $python_version | awk -F. '{printf "%d%02d%02d", $1, $2, $3}')
+        required_num=31305
+        
+        if [ $version_num -lt $required_num ]; then
+          echo "❌ FATAL: Python $python_version < 3.13.5 required"
+          echo "🚫 Documentation generation requires Python 3.13.5+ for:"
+          echo "   - Enhanced string formatting"
+          echo "   - Improved pathlib operations"
+          echo "   - Better exception handling"
+          exit 1
+        fi
+        
+        echo "✅ Python $python_version meets requirements"
+    
+    - name: Install dependencies with strict validation
+      run: |
+        # Create strict requirements for docs
+        cat > docs-requirements.txt << 'EOF'
+        PyYAML>=6.0.1
+        pandas>=2.2.0
+        requests>=2.31.0
+        click>=8.1.7
+        rich>=13.7.0
+        EOF
+        
+        pip install --upgrade pip
+        pip install -r docs-requirements.txt
+        
+        # Validate critical packages for documentation
+        python -c "
+        import yaml
+        import pandas as pd
+        from pathlib import Path
+        import json
+        
+        print('✅ All documentation dependencies verified')
+        print(f'✅ YAML version: {yaml.__version__}')
+        print(f'✅ Pandas version: {pd.__version__}')
+        "
+    
+    - name: Generate template documentation
+      run: |
+        echo "📚 Generating template documentation..."
+        python -c "
+        from src.yaml_prompt_manager import YAMLPromptManager
+        from datetime import datetime
+        
+        manager = YAMLPromptManager()
+        templates = manager.list_templates()
+        
+        # Generate template summary
+        with open('docs/AVAILABLE_TEMPLATES.md', 'w') as f:
+            f.write('# Available Prompt Templates\n\n')
+            f.write(f'*Auto-generated on {datetime.now().strftime(\"%Y-%m-%d %H:%M:%S\")}*\n\n')
+            
+            for category, template_list in templates.items():
+                f.write(f'## {category.title()} Templates\n\n')
+                for template_name in sorted(template_list):
+                    info = manager.get_template_info(template_name)
+                    f.write(f'### {template_name}\n\n')
+                    f.write(f'**Description:** {info.get(\"description\", \"No description\")}\n\n')
+                    f.write(f'**Category:** {info.get(\"category\", \"unknown\")}\n\n')
+                    if info.get('tags'):
+                        f.write(f'**Tags:** {\"  ,\".join(info[\"tags\"])}\n\n')
+                    
+                    variables = info.get('variables', {})
+                    if variables.get('required'):
+                        f.write(f'**Required Variables:** `{\"`, `\".join(variables[\"required\"])}`\n\n')
+                    if variables.get('optional'):
+                        f.write(f'**Optional Variables:** `{\"`, `\".join(variables[\"optional\"])}`\n\n')
+                    f.write('---\n\n')
+        
+        print('✅ Generated docs/AVAILABLE_TEMPLATES.md')
+        "
+    
+    - name: Update configuration documentation
+      run: |
+        echo "⚙️ Generating configuration documentation..."
+        python -c "
+        from src.config import ConfigManager
+        import yaml
+        
+        config = ConfigManager()
+        config_dict = config.to_dict()
+        
+        with open('docs/CONFIGURATION.md', 'w') as f:
+            f.write('# Configuration Reference\n\n')
+            f.write('*Auto-generated configuration documentation*\n\n')
+            
+            for section, settings in config_dict.items():
+                f.write(f'## {section.replace(\"_\", \" \").title()}\n\n')
+                f.write('| Setting | Default Value | Description |\n')
+                f.write('|---------|---------------|-------------|\n')
+                for key, value in settings.items():
+                    f.write(f'| `{key}` | `{value}` | Auto-configured |\n')
+                f.write('\n')
+        
+        print('✅ Generated docs/CONFIGURATION.md')
+        "
+    
+    - name: Generate usage examples
+      run: |
+        echo "💡 Generating usage examples..."
+        mkdir -p docs/examples
+        
+        cat > docs/examples/QUICK_START.md << 'EOF'
+        # Quick Start Examples
+        
+        ## Basic Usage
+        ```bash
+        # Process single file with auto-template selection
+        python src/generate_contextual_tests_v002.py input.reqifz
+        
+        # Process directory with specific model
+        python src/generate_contextual_tests_v002.py "../input/Reqifz_Files" --model deepseek-coder-v2:16b
+        
+        # Use specific template
+        python src/generate_contextual_tests_v002.py input.reqifz --template door_control_specialized
+        ```
+        
+        ## Template Management
+        ```bash
+        # List available templates
+        python src/generate_contextual_tests_v002.py --list-templates
+        
+        # Validate all templates
+        python src/generate_contextual_tests_v002.py --validate-prompts
+        
+        # Run validation tools
+        python prompts/tools/validation_and_tools.py
+        ```
+        
+        ## Development Workflow
+        ```bash
+        # Create test data
+        python utlities/create_mock_reqifz.py
+        
+        # Test with verbose output
+        python src/generate_contextual_tests_v002.py automotive_door_window_system.reqifz --verbose
+        
+        # Hot-reload templates during development
+        python src/generate_contextual_tests_v002.py --reload-prompts
+        ```
+        EOF
+        
+        echo "✅ Generated docs/examples/QUICK_START.md"
+    
+    - name: Update main README if needed
+      run: |
+        echo "📝 Checking if README needs updates..."
+        # Update version info and template count in README
+        python -c "
+        from src.yaml_prompt_manager import YAMLPromptManager
+        import re
+        
+        manager = YAMLPromptManager()
+        template_count = len(manager.list_templates().get('test_generation', []))
+        
+        # Read current README
+        with open('README.md', 'r') as f:
+            content = f.read()
+        
+        # Update template count if pattern found
+        updated = re.sub(
+            r'(Available Templates.*?)(\d+)',
+            f'\\g<1>{template_count}',
+            content,
+            flags=re.IGNORECASE
+        )
+        
+        if updated != content:
+            with open('README.md', 'w') as f:
+                f.write(updated)
+            print(f'✅ Updated README with {template_count} templates')
+        else:
+            print('ℹ️ README already up to date')
+        "
+    
+    - name: Commit documentation updates
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        
+        # Add all documentation files
+        git add docs/ README.md
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "📄 No documentation changes to commit"
+        else
+          git commit -m "📚 Auto-update documentation [skip ci]
+          
+          - Updated template documentation
+          - Refreshed configuration reference  
+          - Generated usage examples
+          
+          Auto-generated by GitHub Actions"
+          
+          git push
+          echo "✅ Documentation updated and pushed"
+        fi
