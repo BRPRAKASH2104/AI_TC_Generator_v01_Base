@@ -1,0 +1,78 @@
+Folder PATH listing for volume OSDisk
+Volume serial number is 8ECD-66B7
+C:.
+¦   .gitignore
+¦   README.md
+¦   tree.txt
+¦   
++---.github
+¦   +---workflows
+¦           release.yml
+¦           update-docs.yml
+¦           validate-and-test.yml
+¦           version-checker.yaml
+¦           
++---docs
+¦   ¦   installation.md
+¦   ¦   
+¦   +---misc
+¦           Commands.txt
+¦           Folder_Structure.txt
+¦           JDA_Export_Options.docx
+¦           JIRA_Requirement_Artifact_Types.txt
+¦           Laptop_Hardware_Spec.txt
+¦           Readme.txt
+¦           Ubuntu_Installation_Setup.txt
+¦           
++---input
+¦   +---Reqifz_Files
+¦           TFDCX32348_001 Rental Car Mode_551f0c.reqifz
+¦           TFDCX32348_001 Rental Car Mode_551f0c_TCD_llama3_1_8b_YAML.csv
+¦           
++---output
+¦   +---TCD
+¦           README.md
+¦           
++---prompts
+¦   ¦   prompt_documentation.md
+¦   ¦   
+¦   +---config
+¦   ¦       .gitkeep
+¦   ¦       prompt_config.yaml
+¦   ¦       README.md
+¦   ¦       
+¦   +---examples
+¦   ¦       .gitkeep
+¦   ¦       README.md
+¦   ¦       
+¦   +---templates
+¦   ¦       .gitkeep
+¦   ¦       error_handling.yaml
+¦   ¦       README.md
+¦   ¦       test_generation.yaml
+¦   ¦       
+¦   +---tools
+¦           .gitkeep
+¦           README.md
+¦           validation_and_tools.py
+¦           
++---samples
+¦   +---TCD
+¦           README.md
+¦           
++---src
+¦   ¦   config.py
+¦   ¦   example_config.yaml
+¦   ¦   generate_contextual_tests_v001.py
+¦   ¦   generate_contextual_tests_v002.py
+¦   ¦   yaml_prompt_manager.py
+¦   ¦   
+¦   +---__pycache__
+¦           config.cpython-313.pyc
+¦           yaml_prompt_manager.cpython-313.pyc
+¦           
++---utilities
+        create_mock_reqifz.py
+        requirements_file.txt
+        version_check.py
+        
