@@ -1,0 +1,101 @@
+# AI Test Case Generator - Production Requirements
+# Minimum Python version: 3.13.5
+# Last updated: 2024-12-19
+
+# ============================================================================
+# CORE DEPENDENCIES (Production Critical)
+# ============================================================================
+
+# Data processing and manipulation
+pandas>=2.2.0,<3.0.0
+# Reason: Advanced DataFrame operations, CSV export, data validation
+
+# HTTP requests for Ollama API communication
+requests>=2.31.0,<3.0.0
+# Reason: Ollama API calls, JSON handling, connection management
+
+# YAML processing for prompt template management
+PyYAML>=6.0.1,<7.0.0
+# Reason: Template loading, configuration management, validation
+
+# Command line interface framework
+click>=8.1.7,<9.0.0
+# Reason: CLI argument parsing, command structure, help generation
+
+# Rich terminal output and formatting
+rich>=13.7.0,<14.0.0
+# Reason: Progress bars, colored output, table formatting
+
+# ============================================================================
+# BUILT-IN MODULES (Verify availability)
+# ============================================================================
+# These are built-in but we verify compatibility:
+# - zipfile (REQIFZ file processing)
+# - xml.etree.ElementTree (REQIF XML parsing)
+# - json (API response handling)
+# - pathlib (File system operations)
+# - argparse (Command line parsing)
+# - re (Regular expressions)
+# - typing (Type hints - enhanced in 3.13+)
+# - dataclasses (Configuration classes)
+# - os (Environment variables)
+
+# ============================================================================
+# DEVELOPMENT AND TESTING (Optional but recommended)
+# ============================================================================
+
+# Testing framework
+pytest>=8.0.0,<9.0.0
+pytest-cov>=4.1.0,<5.0.0
+# Reason: Unit tests, coverage reporting, validation
+
+# Type checking
+mypy>=1.8.0,<2.0.0
+# Reason: Static type analysis, code quality
+
+# ============================================================================
+# SECURITY AND AUDIT TOOLS (Development/CI)
+# ============================================================================
+
+# Security vulnerability scanning
+pip-audit>=2.6.0
+# Reason: Dependency vulnerability detection
+
+# Additional security checking
+safety>=3.0.0
+# Reason: Known security vulnerability database
+
+# ============================================================================
+# OPTIONAL PERFORMANCE ENHANCEMENTS
+# ============================================================================
+
+# Faster XML processing (optional)
+# lxml>=5.1.0
+# Reason: Performance improvement for large REQIF files
+
+# Faster YAML processing (optional)  
+# ruamel.yaml>=0.18.0
+# Reason: Better YAML handling for complex templates
+
+# ============================================================================
+# VERSION COMPATIBILITY NOTES
+# ============================================================================
+
+# Python 3.13.5+ Requirements:
+# - Enhanced error handling and reporting
+# - Improved typing system for better code quality
+# - Performance optimizations for file processing
+# - Security improvements for production use
+# - Better asyncio support for future enhancements
+
+# Dependency Version Rationale:
+# - pandas 2.2.0+: Enhanced DataFrame performance and new features
+# - requests 2.31.0+: Security updates and HTTP/2 support
+# - PyYAML 6.0.1+: Security fixes and performance improvements
+# - click 8.1.7+: Modern CLI features and better help formatting
+# - rich 13.7.0+: Latest terminal formatting and progress features
+
+# Breaking Changes to Watch:
+# - pandas 3.0: Major API changes expected
+# - requests 3.0: API modernization planned
+# - PyYAML 7.0: Configuration format changes possible

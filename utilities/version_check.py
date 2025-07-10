@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Python Version Enforcement Script
-File: scripts/check_python_version.py
+File: utilities/check_python_version.py
 
 Ensures Python 3.13.5+ is being used before running the AI Test Case Generator.
 This script should be run before any main application code.
@@ -107,7 +107,7 @@ class VersionChecker:
         
         print("\n🔄 After upgrading:")
         print(f"   python3 --version  # Should show >= {required_str}")
-        print(f"   python3 scripts/check_python_version.py  # Run this check again")
+        print(f"   python3 utilities/check_python_version.py  # Run this check again")
     
     def check_required_features(self) -> bool:
         """
