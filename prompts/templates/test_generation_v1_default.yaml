@@ -1,0 +1,81 @@
+# =================================================================
+# AI Test Case Generator - Test Generation Prompt Templates
+# File: prompts/templates/test_generation.yaml
+# Version: 1.0 - Exact Copy from generate_contextual_tests_v001.py
+# Last Updated: 2025-01-15
+# =================================================================
+
+metadata:
+  version: "1.0"
+  last_updated: "2025-01-15"
+  maintainer: "Test Engineering Team"
+  description: "Test generation prompt templates - exact copy from v001"
+
+# Template configuration
+template_config:
+  variable_format: "{variable_name}"
+  encoding: "utf-8"
+  line_endings: "unix"
+
+# Main test generation prompts
+test_generation_prompts:
+  
+  # Default prompt - exact copy from generate_contextual_tests_v001.py
+  default:
+    name: "Default Automotive Test Generation"
+    description: "Exact prompt from generate_contextual_tests_v001.py with no modifications"
+    category: "general"
+    tags: ["automotive", "default", "table-based", "v001-original"]
+    
+    variables:
+      required: 
+        - requirement
+        - heading
+        - table_str
+        - interface_str
+        - info_str
+        - row_count
+        - voltage_precondition
+      optional: []
+      defaults: {}
+    
+    template: |
+      You are an expert automotive test engineer. Your task is to write granular test cases by decomposing the logic table within the PRIMARY REQUIREMENT, using all the provided context.
+      --- CONTEXTUAL INFORMATION ---
+      ## FEATURE HEADING:
+      {heading}
+      ## ADDITIONAL INFORMATION NOTES:
+      {info_str}
+      ## SYSTEM INTERFACE DICTIONARY (Inputs/Outputs/Variables):
+      {interface_str}
+      --- PRIMARY REQUIREMENT TO TEST ---
+      **ID:** {requirement}
+      **Logic Table Data:**
+      {table_str}
+      --- YOUR TASK ---
+      1.  Create one test case for EACH data row in the table. Ensure all {row_count} rows are covered.
+      2.  Use the context to understand terms. For example, use the System Interface Dictionary to understand what a signal like 'B_FWMSIG' means.
+      3.  The `"summary_suffix"` for each test case must be a short, descriptive title for that specific test row.
+      4.  The `"action"` must always be "{voltage_precondition}".
+      5.  The `"data"` must be a numbered list of all the "Input" column values for that row, formatted like "1) Set [Header Name] = [Value]".
+      6.  The `"expected_result"` must be a concise statement combining all "Output" column values for that row, formatted as "Verify [Header Name] = [Value]".
+      7.  Your entire response MUST be a single, valid JSON object with a single key: `"test_cases"`.
+
+    validation:
+      min_row_count: 1
+      max_row_count: 50
+      required_context: ["heading", "requirement"]
+
+# Prompt selection rules for automatic template choice
+prompt_selection:
+  # Default fallback
+  default_template: "default"
+  
+  # Model-specific preferences
+  model_preferences:
+    "llama3.1:8b":
+      preferred: ["default"]
+      avoid: []
+    "deepseek-coder-v2:16b":
+      preferred: ["default"]
+      avoid: []

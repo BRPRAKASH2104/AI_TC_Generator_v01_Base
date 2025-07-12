@@ -5,7 +5,7 @@
 
 # File paths and locations
 file_paths:
-  test_generation_prompts: "prompts/templates/test_generation.yaml"
+  test_generation_prompts: "prompts/templates/test_generation_v1_default.yaml"
   error_handling_prompts: "prompts/templates/error_handling.yaml"
   output_directory: "output/"
   backup_directory: "prompts/backups/"
@@ -22,23 +22,23 @@ auto_selection:
   enabled: true
   fallback_to_default: true
   case_sensitive_matching: false
-  
+
   # Confidence thresholds for automatic selection
   confidence_thresholds:
-    high_confidence: 0.8    # Use specialized template
-    medium_confidence: 0.5  # Use default with warning
-    low_confidence: 0.2     # Ask user to specify
+    high_confidence: 0.8 # Use specialized template
+    medium_confidence: 0.5 # Use default with warning
+    low_confidence: 0.2 # Ask user to specify
 
 # Model-specific configurations
 model_configurations:
   "llama3.1:8b":
     max_context_length: 4000
-    recommended_templates: 
+    recommended_templates:
       - "automotive_default"
-      - "door_control_specialized" 
+      - "door_control_specialized"
     timeout_seconds: 300
     temperature: 0.0
-    
+
   "deepseek-coder-v2:16b":
     max_context_length: 8000
     recommended_templates:
@@ -53,7 +53,7 @@ validation:
   validate_yaml_syntax: true
   check_required_variables: true
   validate_template_references: true
-  
+
   # Runtime validation
   check_variable_substitution: true
   validate_output_format: true
@@ -65,7 +65,7 @@ logging:
   log_variable_substitution: false
   log_rendering_time: true
   log_success_rates: true
-  
+
   # Log file locations
   template_usage_log: "logs/template_usage.log"
   error_log: "logs/prompt_errors.log"
@@ -74,14 +74,14 @@ logging:
 # Cache configuration
 caching:
   enabled: true
-  cache_rendered_prompts: false  # Templates change frequently
+  cache_rendered_prompts: false # Templates change frequently
   cache_template_metadata: true
   cache_selection_rules: true
   cache_duration_minutes: 60
 
 # Development and testing
 development:
-  hot_reload: true              # Reload templates when files change
-  validation_mode: "strict"     # strict|relaxed|disabled
+  hot_reload: true # Reload templates when files change
+  validation_mode: "strict" # strict|relaxed|disabled
   debug_variable_substitution: false
   test_mode: false
