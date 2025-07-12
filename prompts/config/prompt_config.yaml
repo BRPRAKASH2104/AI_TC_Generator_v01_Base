@@ -5,7 +5,7 @@
 
 # File paths and locations
 file_paths:
-  test_generation_prompts: "prompts/templates/test_generation_v1_default.yaml"
+  test_generation_prompts: "prompts/templates/test_generation_v2_structured.yaml"
   error_handling_prompts: "prompts/templates/error_handling.yaml"
   output_directory: "output/"
   backup_directory: "prompts/backups/"
