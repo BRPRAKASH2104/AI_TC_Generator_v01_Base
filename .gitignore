@@ -3,3 +3,6 @@
 
 # OS
 .DS_Store
+
+# Cache
+__pycache__/
