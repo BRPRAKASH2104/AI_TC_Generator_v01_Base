@@ -1,0 +1,73 @@
+1. System Requirements
+
+These represent the core functional logic of the system. Each requirement describes what the system should do, including:
+	•	Expected input conditions
+	•	Desired output behavior
+
+System requirements may be expressed in various formats to enhance clarity:
+	•	Textual descriptions
+	•	Flow diagrams
+	•	State diagrams
+	•	Images or illustrations
+	•	Structured tables
+
+✅ Use Case: These form the basis for test case generation and traceability.
+
+⸻
+
+2. System Interface
+
+This artifact defines the interfaces referenced in the system requirements. It includes:
+	•	Input and output definitions
+	•	Local variables
+	•	HMI (Human-Machine Interface) components
+
+✅ Use Case: Essential for understanding how different components interact and for identifying testable elements in the system.
+
+⸻
+
+3. Design Information
+
+This consists of architectural diagrams and technical references that support system understanding. It typically includes:
+	•	Block diagrams
+	•	Signal flows
+	•	Input/output mappings
+	•	State transitions
+
+✅ Use Case: Helps in visualizing system design and supporting detailed test design.
+
+⸻
+
+4. Application Parameters
+
+These are specific parameters considered during test case development. They may include:
+	•	Input and output parameters
+	•	Configurable settings
+	•	Local variables
+
+✅ Use Case: Used to derive test data variations and boundary value conditions.
+
+⸻
+
+5. Informational References
+
+This section contains supporting material that aids in requirement interpretation. It may include:
+	•	Flowcharts
+	•	Supporting block diagrams
+	•	Any critical background details
+
+✅ Use Case: Provides additional context when decoding complex system logic.
+
+⸻
+
+6. Heading (Contextual Summary)
+
+A brief summary placed at the beginning of each requirement to provide context. It helps stakeholders quickly understand:
+	•	The focus of the requirement
+	•	Its relevance or criticality
+	•	Role in the broader system
+
+✅ Use Case: Used by test authors and reviewers to grasp requirement intent at a glance.
+
+✅ Final Notes
+Each artifact plays a unique role in understanding and developing test cases for validating system behavior.
