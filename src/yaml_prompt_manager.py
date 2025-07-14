@@ -241,7 +241,8 @@ class YAMLPromptManager:
         
         final_variables = variables.copy()
         for var, default_value in defaults.items():
-            if var not in final_variables or not final_variables[var] or final_variables[var] == "None":
+            value = final_variables.get(var, None)
+            if var not in final_variables or value is None or value == "" or str(value).lower() == "none":
                 final_variables[var] = default_value
         
         return final_variables
