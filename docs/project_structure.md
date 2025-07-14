@@ -27,7 +27,7 @@ AI_TC_Generator_v01/
 │       └── Ubuntu_Installation_Setup.txt
 ├── input/
 │   └── Reqifz_Files/
-│       └── sampe_requiremenr.reqif
+│       └── sample_requirement.reqif
 ├── output/
 │   └── TCD/
 │       └── README.md
