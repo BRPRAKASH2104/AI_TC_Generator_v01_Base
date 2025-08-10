@@ -1,24 +1,42 @@
-# =================================================================
-#  Context-Rich, High-Performance Test Case Generator
-#  Version: Refactored v1.2 - With YAML Prompt Management
-#
-#  IMPROVEMENTS:
-#  - Integrated YAML-based prompt management
-#  - External template configuration
-#  - Automatic template selection
-#  - Maintained 100% backward compatibility
-#  - Added prompt validation and testing
-# =================================================================
+"""
+Context-Rich, High-Performance Test Case Generator
 
-import zipfile
-import xml.etree.ElementTree as ET
-import requests
-import json
-import pandas as pd
-from pathlib import Path
+Version: Refactored v1.2 - With YAML Prompt Management
+
+Improvements:
+- Integrated YAML-based prompt management
+- External template configuration
+- Automatic template selection
+- Maintained 100% backward compatibility
+- Added prompt validation and testing
+"""
+
 import argparse
+import json
 import re
-from typing import List, Dict, Optional, Any
+import zipfile
+from enum import StrEnum
+from pathlib import Path
+from typing import Any
+import xml.etree.ElementTree as ET
+
+import pandas as pd
+import requests
+
+# Type aliases (PEP 695)
+type JSONObj = dict[str, Any]
+type Table = dict[str, Any]
+type Artifact = dict[str, Any]
+type ArtifactList = list[Artifact]
+type TestCase = dict[str, Any]
+type TestCaseList = list[TestCase]
+
+
+class ArtifactType(StrEnum):
+    HEADING = "Heading"
+    INFORMATION = "Information"
+    SYSTEM_INTERFACE = "System Interface"
+    SYSTEM_REQUIREMENT = "System Requirement"
 
 # Import YAML prompt manager
 from yaml_prompt_manager import YAMLPromptManager
@@ -29,9 +47,8 @@ try:
 except ImportError:
     # Fallback to inline configuration if config.py is not available
     from dataclasses import dataclass
-    import os
     
-    @dataclass
+    @dataclass(slots=True)
     class StaticTestConfig:
         VOLTAGE_PRECONDITION: str = "1. Voltage= 12V\n2. Bat-ON"
         TEST_TYPE: str = "RoboFIT"
@@ -43,7 +60,7 @@ except ImportError:
         COMPONENTS: str = "FEAT"
         LABELS: str = "SYS_DI_VALIDATION_TEST"
     
-    @dataclass
+    @dataclass(slots=True)
     class OllamaConfig:
         host: str = "127.0.0.1"
         port: int = 11434
@@ -97,14 +114,19 @@ class OllamaClient:
         
         try:
             response = requests.post(
-                self.config.api_url, 
-                json=payload, 
-                proxies=self.proxies, 
-                timeout=self.config.timeout
+                self.config.api_url,
+                json=payload,
+                proxies=self.proxies,
+                timeout=self.config.timeout,
             )
             response.raise_for_status()
-            return json.loads(response.text).get("response", "")
-        except Exception as e:
+            try:
+                data: dict[str, Any] = response.json()
+            except ValueError:
+                # Fallback if response is not JSON
+                data = {}
+            return data.get("response", "")
+        except requests.exceptions.RequestException as e:
             print(f"  -> OLLAMA API ERROR with model {model_name}: {e}")
             return ""
 
@@ -117,7 +139,7 @@ class JSONResponseParser:
     """Handles parsing JSON responses from AI models"""
     
     @staticmethod
-    def extract_json_from_response(response_text: str) -> Optional[Dict[str, Any]]:
+    def extract_json_from_response(response_text: str) -> dict[str, Any] | None:
         """
         Extract and parse JSON from AI model response
         
@@ -144,10 +166,10 @@ class JSONResponseParser:
 class HTMLTableParser:
     """Handles parsing of HTML tables from REQIF XML content"""
     
-    def __init__(self, namespaces: Dict[str, str]):
+    def __init__(self, namespaces: dict[str, str]):
         self.namespaces = namespaces
     
-    def parse_html_table(self, table_element) -> Optional[Dict[str, Any]]:
+    def parse_html_table(self, table_element) -> dict[str, Any] | None:
         """
         Parse HTML table element into structured data
         
@@ -227,14 +249,14 @@ class HTMLTableParser:
 class REQIFArtifactExtractor:
     """Handles extraction of artifacts from REQIFZ files"""
     
-    def __init__(self, namespaces: Dict[str, str] = None):
+    def __init__(self, namespaces: dict[str, str] | None = None):
         self.namespaces = namespaces or {
             'reqif': 'http://www.omg.org/spec/ReqIF/20110401/reqif.xsd', 
             'html': 'http://www.w3.org/1999/xhtml'
         }
         self.table_parser = HTMLTableParser(self.namespaces)
     
-    def extract_all_artifacts(self, file_path: Path) -> List[Dict[str, Any]]:
+    def extract_all_artifacts(self, file_path: Path) -> list[dict[str, Any]]:
         """
         Extract all artifacts from a REQIFZ file
         
@@ -277,14 +299,14 @@ class REQIFArtifactExtractor:
             raise FileNotFoundError("No .reqif file found in the archive.")
         return reqif_filename
     
-    def _build_type_map(self, root) -> Dict[str, str]:
+    def _build_type_map(self, root) -> dict[str, str]:
         """Build mapping from type IDs to type names"""
         return {
             t.get('IDENTIFIER'): t.get('LONG-NAME') 
             for t in root.findall('.//reqif:SPEC-OBJECT-TYPE', self.namespaces)
         }
     
-    def _build_attribute_maps(self, root) -> tuple:
+    def _build_attribute_maps(self, root) -> tuple[dict[str, str], dict[str, str]]:
         """Build mappings for foreign ID and text definition attributes"""
         type_to_foreign_id_map, type_to_text_def_map = {}, {}
         
@@ -307,8 +329,13 @@ class REQIFArtifactExtractor:
         
         return type_to_foreign_id_map, type_to_text_def_map
     
-    def _process_spec_object(self, spec_object, type_map: Dict[str, str], 
-                           foreign_id_map: Dict[str, str], text_def_map: Dict[str, str]) -> Dict[str, Any]:
+    def _process_spec_object(
+        self,
+        spec_object,
+        type_map: dict[str, str],
+        foreign_id_map: dict[str, str],
+        text_def_map: dict[str, str],
+    ) -> dict[str, Any]:
         """Process a single spec object and extract its data"""
         internal_id = spec_object.get('IDENTIFIER')
         req_id, req_text, req_type, table_data = internal_id, "", "Unknown", None
@@ -352,7 +379,7 @@ class REQIFArtifactExtractor:
         
         return default_id
     
-    def _extract_text_and_table(self, values_container, target_text_def_ref: str) -> tuple:
+    def _extract_text_and_table(self, values_container, target_text_def_ref: str) -> tuple[str, dict[str, Any] | None]:
         """Extract text content and table data from values container"""
         if not target_text_def_ref:
             return "", None
@@ -387,17 +414,26 @@ class REQIFArtifactExtractor:
 class TestCaseGenerator:
     """Handles generation of test cases using AI models with YAML prompt templates"""
     
-    def __init__(self, model_name: str, yaml_prompt_manager: YAMLPromptManager, 
-                 ollama_client: OllamaClient = None, config: StaticTestConfig = None):
+    def __init__(
+        self,
+        model_name: str,
+        yaml_prompt_manager: YAMLPromptManager,
+        ollama_client: OllamaClient | None = None,
+        config: StaticTestConfig | None = None,
+    ):
         self.model_name = model_name
         self.yaml_prompt_manager = yaml_prompt_manager
         self.ollama_client = ollama_client or OllamaClient()
         self.config = config or StaticTestConfig()
         self.json_parser = JSONResponseParser()
     
-    def generate_tests_with_context(self, requirement: Dict[str, Any], heading: str, 
-                                   info_list: List[Dict[str, Any]], 
-                                   interface_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def generate_tests_with_context(
+        self,
+        requirement: dict[str, Any],
+        heading: str,
+        info_list: list[dict[str, Any]],
+        interface_list: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """Generate test cases using YAML prompt templates"""
         
         print(f"      - Writing test cases for '{requirement['id']}' with {self.model_name}...")
@@ -433,20 +469,20 @@ class TestCaseGenerator:
         parsed_json = self.json_parser.extract_json_from_response(response_str)
         return parsed_json.get("test_cases", []) if parsed_json else []
     
-    def _format_table_for_prompt(self, table: Dict[str, Any]) -> str:
+    def _format_table_for_prompt(self, table: dict[str, Any]) -> str:
         """Format table data for inclusion in prompt"""
         table_str = "Headers: " + ", ".join(table['headers']) + "\n"
         for i, row in enumerate(table['rows']):
             table_str += f"Row {i+1}: {row}\n"
         return table_str
     
-    def _format_interfaces_for_prompt(self, interface_list: List[Dict[str, Any]]) -> str:
+    def _format_interfaces_for_prompt(self, interface_list: list[dict[str, Any]]) -> str:
         """Format interface list for inclusion in prompt"""
         if not interface_list:
             return "None"
         return "\n".join([f"- {i['id']}: {i['text']}" for i in interface_list])
     
-    def _format_info_for_prompt(self, info_list: List[Dict[str, Any]]) -> str:
+    def _format_info_for_prompt(self, info_list: list[dict[str, Any]]) -> str:
         """Format information list for inclusion in prompt"""
         if not info_list:
             return "None"
@@ -460,10 +496,10 @@ class TestCaseGenerator:
 class TestCaseFormatter:
     """Handles formatting of test cases for output"""
     
-    def __init__(self, config: StaticTestConfig = None):
+    def __init__(self, config: StaticTestConfig | None = None):
         self.config = config or StaticTestConfig()
     
-    def format_test_case(self, test: Dict[str, Any], requirement_id: str, issue_id: int) -> Dict[str, Any]:
+    def format_test_case(self, test: dict[str, Any], requirement_id: str, issue_id: int) -> dict[str, Any]:
         """
         Format a single test case for CSV output
         
@@ -501,8 +537,12 @@ class TestCaseFormatter:
 class REQIFZFileProcessor:
     """Main orchestrator for processing REQIFZ files with YAML prompt management"""
     
-    def __init__(self, model_name: str, config_manager: ConfigManager = None, 
-                 yaml_prompt_manager: YAMLPromptManager = None):
+    def __init__(
+        self,
+        model_name: str,
+        config_manager: ConfigManager | None = None,
+        yaml_prompt_manager: YAMLPromptManager | None = None,
+    ):
         self.model_name = model_name
         self.config_manager = config_manager or ConfigManager()
         self.yaml_prompt_manager = yaml_prompt_manager or YAMLPromptManager()
@@ -550,14 +590,21 @@ class REQIFZFileProcessor:
         safe_model_name = self.model_name.replace(':', '_').replace('.', '_')
         return reqifz_file.with_name(f"{reqifz_file.stem}_TCD_{safe_model_name}_YAML.csv")
     
-    def _separate_artifacts(self, all_objects: List[Dict[str, Any]]) -> tuple:
+    def _separate_artifacts(self, all_objects: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         """Separate artifacts into system interfaces and processing list"""
-        system_interfaces = [obj for obj in all_objects if obj['type'] == 'System Interface']
-        processing_list = [obj for obj in all_objects if obj['type'] != 'System Interface']
+        system_interfaces = [
+            obj for obj in all_objects if obj.get('type') == ArtifactType.SYSTEM_INTERFACE
+        ]
+        processing_list = [
+            obj for obj in all_objects if obj.get('type') != ArtifactType.SYSTEM_INTERFACE
+        ]
         return system_interfaces, processing_list
     
-    def _process_artifacts(self, processing_list: List[Dict[str, Any]], 
-                          system_interfaces: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _process_artifacts(
+        self,
+        processing_list: list[dict[str, Any]],
+        system_interfaces: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """Process artifacts and generate test cases"""
         master_test_list = []
         issue_id_counter = 1
@@ -565,18 +612,18 @@ class REQIFZFileProcessor:
         info_since_heading = []
         
         for i, obj in enumerate(processing_list):
-            if obj['type'] == 'Heading':
+            if obj.get('type') == ArtifactType.HEADING:
                 current_heading = obj['text']
                 info_since_heading = []
                 print(f"\n  -> Context set to HEADING: '{obj['id']}'")
                 continue
             
-            if obj['type'] == 'Information':
+            if obj.get('type') == ArtifactType.INFORMATION:
                 info_since_heading.append(obj)
                 print(f"  -> Storing INFO: '{obj['id']}'")
                 continue
             
-            if obj['type'] == 'System Requirement' and obj.get('table'):
+            if obj.get('type') == ArtifactType.SYSTEM_REQUIREMENT and obj.get('table'):
                 test_cases, issue_id_counter = self._process_requirement(
                     obj, current_heading, info_since_heading, system_interfaces, 
                     i, len(processing_list), issue_id_counter
@@ -586,9 +633,16 @@ class REQIFZFileProcessor:
         
         return master_test_list
     
-    def _process_requirement(self, requirement: Dict[str, Any], heading: str, 
-                           info_list: List[Dict[str, Any]], interface_list: List[Dict[str, Any]], 
-                           index: int, total: int, issue_id_counter: int) -> tuple:
+    def _process_requirement(
+        self,
+        requirement: dict[str, Any],
+        heading: str,
+        info_list: list[dict[str, Any]],
+        interface_list: list[dict[str, Any]],
+        index: int,
+        total: int,
+        issue_id_counter: int,
+    ) -> tuple[list[dict[str, Any]], int]:
         """Process a single requirement and generate test cases"""
         print(f"  --- Analyzing Requirement {index+1}/{total} (ID: {requirement['id']}) ---")
         
@@ -614,8 +668,7 @@ class REQIFZFileProcessor:
         
         return formatted_tests, issue_id_counter
     
-    def _save_test_cases(self, master_test_list: List[Dict[str, Any]], 
-                        output_path: Path, filename: str) -> None:
+    def _save_test_cases(self, master_test_list: list[dict[str, Any]], output_path: Path, filename: str) -> None:
         """Save test cases to CSV file"""
         if master_test_list:
             print(f"\nSaving {len(master_test_list)} total test cases to '{output_path.name}'...")
@@ -661,9 +714,10 @@ Available Models:
             """
         )
         parser.add_argument(
-            "input_path", 
+            "input_path",
             nargs='?',
-            help="Path to a single .reqifz file or a folder of .reqifz files."
+            type=Path,
+            help="Path to a single .reqifz file or a folder of .reqifz files.",
         )
         parser.add_argument(
             "--model", 
@@ -701,7 +755,7 @@ Available Models:
         return parser.parse_args()
     
     @staticmethod
-    def discover_files(input_path: Path) -> List[Path]:
+    def discover_files(input_path: Path) -> list[Path]:
         """
         Discover REQIFZ files to process
         
@@ -736,7 +790,7 @@ class ApplicationFactory:
     """Factory class for creating application components"""
     
     @staticmethod
-    def create_config_manager(config_file_path: str = None) -> ConfigManager:
+    def create_config_manager(config_file_path: str | None = None) -> ConfigManager:
         """
         Create configuration manager with optional custom config file
         
@@ -764,7 +818,7 @@ class ApplicationFactory:
         return config_manager
     
     @staticmethod
-    def create_yaml_prompt_manager(prompt_config_file: str = None) -> YAMLPromptManager:
+    def create_yaml_prompt_manager(prompt_config_file: str | None = None) -> YAMLPromptManager:
         """
         Create YAML prompt manager
         
@@ -778,8 +832,11 @@ class ApplicationFactory:
         return YAMLPromptManager(config_file)
     
     @staticmethod
-    def create_processor(model_name: str, config_manager: ConfigManager, 
-                        yaml_prompt_manager: YAMLPromptManager) -> REQIFZFileProcessor:
+    def create_processor(
+        model_name: str,
+        config_manager: ConfigManager,
+        yaml_prompt_manager: YAMLPromptManager,
+    ) -> REQIFZFileProcessor:
         """
         Create file processor with given model, configuration, and prompt manager
         
@@ -819,10 +876,14 @@ def validate_model_availability(model_name: str) -> bool:
     try:
         response = requests.get("http://127.0.0.1:11434/api/tags", timeout=5)
         if response.status_code == 200:
-            available_models = [model['name'] for model in response.json().get('models', [])]
+            try:
+                data: dict[str, Any] = response.json()
+            except ValueError:
+                return False
+            available_models = [model['name'] for model in data.get('models', [])]
             return model_name in available_models
         return False
-    except:
+    except requests.exceptions.RequestException:
         return False
 
 # Replace the handle_prompt_management_commands function in generate_contextual_tests_v002.py
@@ -922,7 +983,7 @@ def main():
             print("Use --help for usage information")
             return 1
         
-        input_path = Path(args.input_path)
+        input_path = Path(args.input_path) if not isinstance(args.input_path, Path) else args.input_path
         
         # Validate model availability
         if not validate_model_availability(args.model):
@@ -974,8 +1035,8 @@ def main():
             traceback.print_exc()
         return 1
     
-    return 0
+        return 0
 
 
 if __name__ == "__main__":
-    exit(main())
+    raise SystemExit(main())
