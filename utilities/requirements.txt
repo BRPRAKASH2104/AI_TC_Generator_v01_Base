@@ -26,6 +26,10 @@ click>=8.1.7,<9.0.0
 rich>=13.7.0,<14.0.0
 # Reason: Progress bars, colored output, table formatting
 
+# Excel file support for pandas
+openpyxl>=3.1.0,<4.0.0
+# Reason: Required for writing .xlsx files with pandas
+
 # ============================================================================
 # BUILT-IN MODULES (Verify availability)
 # ============================================================================
